@@ -1,0 +1,163 @@
+library(SCP)
+library(Seurat)
+library(stringr)
+
+FeaturePlot(sce,features = 'CD3D')
+FeaturePlot(sce,features = 'CD8A')
+FeaturePlot(sce,features = '')
+DimPlot(sce,reduction = 'tsne',group.by = 'orig.ident')
+
+sce@meta.data$Group<-sce@meta.data$orig.ident
+sce@meta.data$Group<-str_replace(sce@meta.data$Group,'CTL1|CTL2|CTL3|CTL4','CTL')
+sce@meta.data$Group<-str_replace(sce@meta.data$Group,'NP1|NP2|NP3|NP4','NP')
+table(sce@meta.data$Group)
+
+CellDimPlot(sce,group.by = 'Group',reduction = 'tsne',theme_use = 'theme_blank')
+
+sce.markers<-FindAllMarkers(sce,only.pos = T,min.pct = 0.30)
+
+h1<-GroupHeatmap(sce,label_size = 0,label_color = 'white',group.by = 'celltype',
+                  features = c('CD3D','CD3E','CD3G',#T
+                                                        'EPCAM','KRT18',"SERPINB3",#epi
+                                                        'DCN','LUM',#fib
+                                                        'CD14','FCN1',#mono
+                                                        'PECAM1','CLDN5',#endo
+                                                        'CD68','CD163',
+                                                        'ACTA2','MYH11','TAGLN',#"SMC"
+                                                        'FCGR3A','NCAM1','NKG67',#NK
+                                                        'CD79A','MS4A1','CD19','MZB1',#B/Plasma
+                                                        'CD1C','CD1D',#DC
+                               "TPSB2",'TPSAB1'#Mast 
+                          ),assay = 'RNA',cluster_columns = F, cell_annotation = 'Group'
+                 ,cluster_rows = F, show_row_names = T,cell_split_palette = "Dark2")
+
+h1$plot
+
+sce<-RunDEtest(sce,group_by = 'celltype')
+de_filter <- filter(sce@tools$DEtest_celltype$AllMarkers_wilcox,'p_val_adj' < 0.05 & 'avg_log2FC' > 1)
+DEG<-
+
+
+sce@meta.data$celltype<-sce@meta.data$seurat_clusters
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'23|24|33|36','T cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'13|16','Plasma cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'28','Dendritic cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'19|22|25|29','Macrophage')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'27','Natural killer cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'12|31','Mast cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'15','Monocyte')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'26|21','Endothelial cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'17|18|20|37|38','Smooth muscle cells')
+#sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'11|14','Basal cells')
+#sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'32|34','Ciliated cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'10|11|14|30|32|34|35','Epithelial cells')
+#sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'0|1|2|3','T cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'7','B cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'4','Plasma cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'5|6','Fibroblasts')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'8','Endothelial cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'9','Natural killer cells')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+DimPlot(sce,group.by = 'celltype',reduction = 'tsne',label = T)
+
+sce@meta.data$samples<-sce@meta.data$orig.ident
+CellDimPlot(sce,group.by = 'samples',reduction = 'tsne',theme_use = 'theme_blank')
+CellDimPlot(sce,group.by = 'Group',reduction = 'tsne',theme_use = 'theme_blank')
+pdf(file = 'fig1-e.pdf',height = 4,width = 6)
+CellStatPlot(sce,stat.by = 'celltype',group.by = 'samples')
+dev.off()
+FeatureDimPlot(sce,features = 'IL4',reduction = 'tsne',assay = 'RNA',bg_cutoff = )
+FeatureDimPlot(sce,features = 'IL5',reduction = 'tsne',assay = 'RNA',bg_cutoff = )
+FeatureDimPlot(sce,features = 'IL13',reduction = 'tsne',assay = 'RNA',bg_cutoff = )
+
+sce<-JoinLayers(sce,assay = 'RNA')
+
+sce1<-sce
+sce1[["RNA3"]] <- as(object = sce[["RNA"]], Class = "Assay")
+pdf(file = 'fig1-d.pdf',height = 4,width =15 )
+FeatureStatPlot(sce,stat.by = c('IL4','IL5','IL13'),assay = 'RNA',group.by = 'celltype',
+                split.by = 'Group',bg.by = 'celltype',
+                comparisons = T,plot_type = 'bar',
+                add_point = T,y.min = 0)
+dev.off()
+
+FeatureDimPlot(sce,features = 'IL5',assay='RNA')
+
+#important make visualization via SeuratV5 possible
+sce[['RNA']]<-as(sce[["RNA"]], "Assay")
+
+
+#h1<-GroupHeatmap(sce,features = 'CD3D')
+
+CellDimPlot(sce,
+            group.by = "celltype", split.by = "Group", reduction = "TSNE",
+            cells.highlight = FALSE, theme_use = "theme_blank", legend.position = "none"
+)
+
+sce1<-sce[,sce@meta.data$Group%in%c('CTL')]
+sce2<-sce[,sce@meta.data$Group%in%c('NP')]
+
+p1<-CellDimPlot(sce,group.by = 'celltype',label = T,reduction = 'tsne',
+            theme_use = 'theme_blank',legend.position = 'none',title = 'All Samples')
+
+CellDimPlot(sce1,group.by = 'celltype',label = T,reduction = 'tsne',title='Health Control',
+            theme_use = 'theme_blank',legend.position = 'none')
+
+p2<-CellDimPlot(sce,group.by = 'celltype',split.by = 'Group',label = T,reduction = 'tsne',
+            theme_use = 'theme_blank',bg_color = 'white')
+
+pdf(file = 'fig1-a.pdf',height = 4,width = 6)
+p1
+dev.off()
+
+pdf(file = 'fig1-b.pdf',height = 4,width = 12)
+p2
+dev.off()
+
+pdf(file = 'fig1-c.pdf',height = 5,width = 10)
+h1$plot
+dev.off()
+
+library(CellChat)
+Idents(sce)<-'celltype'
+data.input <- GetAssayData(sce, assay = "RNA", slot = "data") # normalized data matrix
+labels <- Idents(sce)
+meta <- data.frame(group = labels, row.names = names(labels)) # create a dataframe of the cell labels
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "group")
+
+cellchat <- addMeta(cellchat, meta = meta)
+cellchat <- setIdent(cellchat, ident.use = "group") # set "labels" as default cell identity
+levels(cellchat@idents) # show factor levels of the cell labels
+groupSize <- as.numeric(table(cellchat@idents)) # number of cells in each cell group
+CellChatDB <- CellChatDB.human # use CellChatDB.mouse if running on mouse data
+CellChatDB.use <- CellChatDB # simply use the default CellChatDB
+# set the used database in the object
+cellchat@DB <- CellChatDB.use
+# subset the expression data of signaling genes for saving computation cost
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+# project gene expression data onto PPI network (optional)
+#cellchat <- projectData(cellchat, PPI.human)
+cellchat <- computeCommunProb(cellchat)
+# Filter out the cell-cell communication if there are only few number of cells in certain cell groups
+cellchat <- filterCommunication(cellchat, min.cells = 10)
+cellchat <- computeCommunProbPathway(cellchat)
+cellchat <- aggregateNet(cellchat)
+
+#dev.off()
+netVisual_circle(cellchat@net$weight, 
+                 vertex.weight = groupSize, 
+                 weight.scale = T, 
+                 label.edge= T
+                  ,targets.use = 'Mast cells',
+                 title.name = "Number of interactions")
+netVisual_bubble(cellchat, 
+                 
+                 signaling = ,
+                 targets.use = 12, 
+                 remove.isolate = FALSE)
+
