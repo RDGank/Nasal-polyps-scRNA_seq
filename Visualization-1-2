@@ -1,0 +1,193 @@
+library(SCP)
+library(Seurat)
+DimPlot(sce,group.by   = 'Group')
+DimPlot(sce,group.by = 'orig.ident')
+DimPlot(sce,group.by = 'celltype')
+CellDimPlot(sce,group.by = 'celltype',label = T)
+
+genes<-c('CD3D','CD3E','EPCAM','KRT18',
+         'DCN','PECAM1','ACTA2','TAGLN','S100A8','S100A9','CD14','CD68','NKG7','GNLY',
+         'MZB1','CD79A','MS4A1','CD1C','CD1D','TPSB2','TPSAB1')
+DotPlot(sce,features = genes,group.by = 'celltype',assay = 'RNA')#+coord_flip()
+
+library(stringr)
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'Monocyte','Neutrophil')
+
+table(sce@meta.data$orig.ident)
+
+DimPlot(sce,group.by = 'Group')
+
+pdf(file = '1-all-1.pdf',height = 4.5,width = 10)
+CellDimPlot(sce,group.by = 'celltype',label = T,reduction = 'tsne',split.by = 'Group',bg_color = 'white')
+dev.off()
+
+pdf(file = '1-all-1-1.pdf',height = 4.5,width = 5)
+CellDimPlot(sce,group.by = 'orig.ident',label = F,reduction = 'tsne',bg_color = 'white')
+dev.off()
+
+pdf(file = '1-all-2.pdf',height = 2.5,width = 15)
+CellStatPlot(sce,group.by = 'Group',label.size = 0.9,
+             stat.by = 'celltype',label = T,plot_type = 'trend',flip = T)
+dev.off()
+
+pdf(file = '1-all-3.pdf',height = 4,width = 15)
+CellStatPlot(sce, stat.by = "Group", group.by = "celltype", position = "dodge", label = TRUE)
+dev.off()
+
+ht2 <- GroupHeatmap(
+  srt = sce, features = genes, group.by = "celltype",
+  split.by = "Group", cell_split_palette = "Dark2",
+  cluster_rows = F, cluster_columns = TRUE,assay = 'RNA',show_row_names = T
+)
+
+pdf(file = '1-all-4.pdf',height = 6,width = 8)
+ht2$plot
+dev.off()
+
+pdf(file = '1-all-5.pdf',height = 3.5,width = 12)
+FeatureStatPlot(sce,stat.by =  c('IL4','IL5','IL13'),group.by = 'celltype',split.by = 'Group',comparisons = c('T cells','Mast cells'),
+                assay = 'RNA',bg.by = 'celltype',add_point = T,pt.size = 0.001)
+dev.off()
+
+
+pdf(file = '1-all-6.pdf',height =10 ,width =3.5 )
+FeatureDimPlot(sce,features = c('IL4','IL5','IL13'),assay = 'RNA',reduction = 'tsne',ncol = 1)
+dev.off()
+
+save(sce,sce.markers,file = 'sce-NP-24-11-10.RData')
+
+
+load(file='sce-NP-epi-24-11-11.RData')
+
+DotPlot(sce,features = 'SCGB1A1',assay = 'RNA')
+
+DotPlot(sce,features = c(
+  'KRT5','KRT15','KRT17',#basal
+  'C20orf85','C9orf24',#'CAPS',#ciliated
+  'MUC5AC','MUC5B',#Golbet
+  'C6orf58','ESRRG'
+  #'CEACAM5','CEACAM6'
+ # 'SCGB1A1','SCGB3A1', 'LYPD2','MSLN'
+ # ,'S100P','CD74','SPINK1','RHOB'
+ # 'LYZ','STATH','ZG16B','SCGB1B2P',
+  
+),assay = 'RNA')
+
+
+library(stringr)
+sce@meta.data$subcelltype<-sce@meta.data$seurat_clusters
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'11','Basal-KRT①④')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'10','Ciliated-SCGB③A①')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'0','Basal-TP⑥③')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'1','Basal-SERPINB④')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'3','Ciliated-C⑨orf②④')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'4','Glandular-C⑥orf⑤⑧')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'5','Goblet-LYPD②')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'6','Goblet-RIMS①')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'7','Ciliated-DNAH③')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'8','Glandular-ESRRG')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'9','Ciliated-SCGB③A①')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'2','Glandular-C⑥orf⑤⑧')
+
+library(COSG)
+COSG_markers <- cosg(
+  sce,
+  groups='all',
+  assay='RNA',
+  slot='data',
+  mu=1,
+  n_genes_user=900)
+DotPlot(sce,features = COSG_markers$names[1,1:11],assay = 'RNA')
+
+DimPlot(sce,group.by = 'subcelltype')
+
+
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'①','1')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'②','2')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'③','3')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'④','4')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'⑤','5')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'⑥','6')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'⑦','7')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'⑧','8')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'⑨','9')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'','')
+sce@meta.data$subcelltype<-str_replace(sce@meta.data$subcelltype,'','')
+
+
+sce <- RunSlingshot(sce, group.by = "subcelltype", reduction = "UMAP", show_plot = FALSE)
+
+#CellDimPlot(pancreas_sub, group.by = "subcelltype", reduction = "UMAP", lineages = paste0("Lineage", 1:3))
+#CellDimPlot(pancreas_sub, group.by = "subcelltype", reduction = "UMAP", lineages = paste0("Lineage", 1), lineages_whiskers = TRUE)
+
+library(ggplot2)
+library(ggsci)
+library(ggpubr)
+library(RColorBrewer)
+getPalette = colorRampPalette(brewer.pal(12, "Paired"))
+mycolors = getPalette(length(unique(plt_data$celltype)))
+# 为了拼图美观，我们把legend隐藏掉
+#plt_list = list()for (gene in top6) {  print(gene)  p = ggscatter(data = plt_data,                x = 'Pseudotime',                y = gene,                color = 'celltype',                size = 0.6)+    geom_smooth(se = F, color = 'orange')+    theme_bw()+    scale_color_manual(values = mycolors)+    theme(legend.position = 'none')  plt_list[[gene]] = p}library(patchwork)wrap_plots(plt_list)ggsave(filename = 'figures/05_top6_genes.pdf', width = 9, height = 5)
+
+#CellDimPlot(sce,group.by = 'c')
+
+
+CellDimPlot(sce, group.by = "celltype", reduction = "UMAP",theme_use = 'theme_blank')
+
+pdf(file = '2-epi-1.pdf',height = 4,width =5 )
+CellDimPlot(sce,group.by = 'subcelltype',pt.size = 0.1,theme_use = 'theme_blank',label = T)
+dev.off()
+
+pdf(file = '2-epi-2.pdf',height = 4,width = 5)
+CellDimPlot(sce,group.by = 'Group',pt.size = 0.1,theme_use = 'theme_blank',label = T)
+dev.off()
+
+pdf(file = '2-epi-3.pdf',height = 8,width = 3.5)
+CellStatPlot(sce,stat.by = 'celltype',group.by = 'Group',label = T)
+dev.off()
+
+pdf(file = '2-epi-4.pdf',height = 2.7,width = 20)
+CellStatPlot(sce,flip = T,label.size = 2.5,stat.by = 'subcelltype',group.by = 'Group',label = T)
+dev.off()
+
+pdf(file = '2-epi-5.pdf',height = 3.5,width = 22)
+FeatureDimPlot(sce, ncol = 5,features = paste0("Lineage", 1:6), reduction = "UAMP")
+dev.off()
+
+genes<-c(
+  'KRT5','KRT15','KRT14','TP63','SERPINB4',#basal
+  'C20orf85','C9orf24','SCGB3A1','C9orf24','DNAH3',#'CAPS',#ciliated
+  'MUC5AC','MUC5B','LYPD2','RIMS1',#Golbet
+  'C6orf58','ESRRG')
+
+ht2 <- GroupHeatmap(
+  srt = sce, features = c(genes,'IL33','TSLP','KITLG'), group.by = "subcelltype",
+  
+  cell_annotation = 'Group',
+   cell_split_palette = "Dark2",
+  cluster_rows = F, cluster_columns = TRUE,assay = 'RNA',show_row_names = T
+ , add_dot = TRUE, add_bg = TRUE, nlabel = 0#, show_row_names = TRUE
+  )
+
+pdf(file = '2-epi-6.pdf',height = 6,width = 7.5)
+ht2$plot
+dev.off()
+
+pdf(file = '2-epi-7.pdf',height = 3.5,width = 13)
+FeatureDimPlot(sce,features = c('IL33','TSLP','KITLG'),assay = 'RNA',ncol = 3)
+dev.off()
+
+pdf(file = ,'2-epi-8.pdf',height = 9,width =7 )
+FeatureStatPlot(sce,ncol = 1,stat.by =c('IL33','TSLP','KITLG'),group.by = 'subcelltype'
+                  ,split.by = 'Group',comparisons = T,add_point = T,pt.size = 0.01,assay = 'RNA')
+dev.off()
+
+
+
+
+load(file = 'sce-NP-24-11-10.RData')
+table(sce@meta.data$celltype)
+
+sce<-sce[,sce@meta.data$celltype%in%c('Endothelial cells','Fibroblasts','Smooth muscle cells')]
+
+
