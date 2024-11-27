@@ -1,0 +1,53 @@
+FeatureStatPlot(sce,stat.by = c('IL33'),assay = 'RNA',group.by = 'seurat_clusters',
+                split.by = 'Group',bg.by = 'seurat_clusters',
+                comparisons = T,plot_type = 'violin',
+                add_point = T,y.min = 0)
+
+FeatureStatPlot(sce,stat.by = 'IL33',group.by = 'seurat_clusters')
+
+sce<-sce[,sce@meta.data$celltype%in%c('Epithelial cells')]
+sce<-JoinLayers(sce,assay = 'RNA')
+sce<-CCA_rm_batch(project = sce,split.by = 'orig.ident',nfeatures = 3500,dims = 10,resolution = 0.8)
+load(file = 'sce-NP-epi-24-11-11.RData')
+
+sce.markers<-FindAllMarkers(sce,only.pos = T,min.pct = 0.3)
+library(dplyr)
+sce.markers%>%group_by(cluster)%>%top_n(n=2,wt=avg_log2FC)
+DotPlot(sce,features = c(
+  'KRT5','KRT15','KRT17',#basal
+  'C20orf85','C9orf24','CAPS',#ciliated
+  'SERPINB3','VMO1','S100A4',
+  'SCGB1A1','SCGB3A1', 'LYPD2','MSLN',
+  
+  'LYZ','STATH','ZG16B'
+  
+  ),assay = 'RNA')
+
+
+library(stringr)
+sce@meta.data$celltype<-sce@meta.data$seurat_clusters
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'11','Basal-KRT①④')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'10','Ciliated-SCGB③A①')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'0','Basal-TP⑥③')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'1','Basal-KRT⑤')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'3','Ciliated-C②零orf⑧⑤')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'4','Glandular')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'5','Goblet')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'6','Goblet')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'7','Ciliated-DNAH①①')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'8','Glandular-ESRRG')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'9','Ciliated-SCGB③A①')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'2','Glandular')
+DimPlot(sce,group.by = 'celltype')
+
+
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+sce@meta.data$celltype<-str_replace(sce@meta.data$celltype,'','')
+
